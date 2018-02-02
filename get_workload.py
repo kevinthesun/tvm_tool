@@ -8,7 +8,7 @@ import json
 import argparse
 
 from tvm.contrib import graph_runtime
-from topi.nn.conv2d import Workload
+from topi.nn.conv2d import Workload, _WORKLOADS
 from mxnet import gluon
 from mxnet.gluon.model_zoo.vision import get_model
 
@@ -34,6 +34,8 @@ def get_conv2d_workload(model, in_dtype='float32', out_dtype='float32'):
     node_map = g_dict["node_row_ptr"]
     workload_list = []
     workload_set = set()
+    for workload in _WORKLOADS:
+        workload_set.add(workload)
 
     for node in node_list:
         if node['op'] != 'conv2d':
@@ -52,11 +54,11 @@ def get_conv2d_workload(model, in_dtype='float32', out_dtype='float32'):
         hpad, wpad = (attrs["padding"])[1:-1].split(',')
         hstride, wstride = (attrs["strides"])[1:-1].split(',')
 
-        workload = (in_dtype, out_dtype, height, width, in_filter, int(out_filter),
-                    int(hkernel), int(wkernel), int(hpad), int(wpad), int(hstride), int(wstride))
+        workload = Workload(*[in_dtype, out_dtype, height, width, in_filter, int(out_filter),
+                              int(hkernel), int(wkernel), int(hpad), int(wpad), int(hstride), int(wstride)])
         if workload not in workload_set:
             workload_set.add(workload)
-            workload_list.append(Workload(*list(workload)))
+            workload_list.append(workload)
 
     return workload_list
 
@@ -66,4 +68,7 @@ if __name__ == "__main__":
     model = args.model
     workload_list = get_conv2d_workload(model)
     for workload in workload_list:
-       print(workload)
+       print('Workload(\'%s\', \'%s\', %d, %d, %d, %d, %d, %d, %d, %d, %d, %d),' % (
+           workload.in_dtype, workload.out_dtype, workload.height, workload.width,
+           workload.in_filter, workload.out_filter, workload.hkernel, workload.wkernel,
+           workload.hpad, workload.wpad, workload.hstride, workload.wstride))
