@@ -549,7 +549,7 @@ def test_conv2d_nchw(workload_index):
 
     out_size = (in_size + 2 * padding - kernel) // stride + 1
     vhw_candidates = factors(out_size)
-    vc_candidates = [16, 32, 64]
+    vc_candidates = [8, 16, 32, 64]
     ba_candidates = factors(in_size)
     bc_candidates = factors(kernel)
 
