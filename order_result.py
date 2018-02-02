@@ -1,6 +1,5 @@
 import collections
 
-
 def order_result(file):
     out_dict = dict()
     with open(file, 'r') as f:
